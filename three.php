@@ -34,8 +34,6 @@ if(isset($_POST['sub'])){
                 }
             }
         }
-//        $word2 = implode("", $word);
-//        return intval($word2);
         return $word;
     }
     $word2 = $_POST['word'];
@@ -47,40 +45,45 @@ if(isset($_POST['sub'])){
         if(is_prime($n))
             $flag = 1;
     }
-    while(!$flag) {
-        $x = rand(1, 100);
-        if(is_prime($x))
-            $flag = 1;
-    }
     while($flag) {
         $q = rand(2053, 10000);
         if(is_prime($q))
             $flag = 0;
     }
+    while(!$flag) {
+        $x = rand(1, 10);
+        if(is_prime($x))
+            $flag = 1;
+    }
+    while($flag) {
+        $y = rand(1, 10);
+        if(is_prime($y))
+            $flag = 0;
+    }
+
     $u = pow($q, $x);
     $A = gmp_mod($u , $n);
+
+    $u = pow($q, $y);
+    $B = gmp_mod($u , $n);
+
+    $u = pow($B, $x);
+    $Kx = gmp_mod($u , $n);
+
+    $u = pow($A, $y);
+    $Ky = gmp_mod($u , $n);
 
     for($i = 0; $i < count($word); $i++){
         $word[$i] = $word[$i] + $A;
     }
+
+    $cipher = implode("", $word);
 }
-if(isset($_POST['sub2']))
-{
-    while($flag) {
-    $y = rand(1, 100);
-    if(is_prime($y))
-        $flag = 0;
-    }
-
-
-
-}
-
 ?>
 
 
 <div class="main_menu">
-    <h2>Лабораторная работа 2</h2>
+    <h2>Лабораторная работа 3</h2>
     <form method="post">
         <input type="text" name="word" style="width: 185px" placeholder="Введите текст">
         <div style="height: 10px"></div>

@@ -16,44 +16,40 @@ if(isset($_POST['sub'])){
 
     $text = $_POST['text-input'];
 
-    // convert the text to binary code sequence
     $binary = '';
     for ($i = 0; $i < strlen($text); $i++) {
         $binary .= str_pad(decbin(ord($text[$i])), 8, '0', STR_PAD_LEFT);
     }
 
-    // CRC12 method implementation
-    $generator = 0x80F; // generator polynomial
-    $crc = 0xFFF; // initial value for CRC
+    $generator = 0x80F;
+    $crc = 0xFFF;
     for ($i = 0; $i < strlen($binary); $i++) {
         $crc ^= ord($binary[$i]) << 4;
         for ($j = 0; $j < 8; $j++) {
             if ($crc & 0x800) {
                 $crc = ($crc << 1) ^ $generator;
-                $crc &= 0xFFF; // ensure 12-bit CRC
+                $crc &= 0xFFF;
             } else {
                 $crc <<= 1;
-                $crc &= 0xFFF; // ensure 12-bit CRC
+                $crc &= 0xFFF;
             }
         }
     }
 
-    // introduce errors in the binary code sequence (for testing purposes)
     $binary_with_errors = $binary;
     $binary_with_errors[2] = ($binary_with_errors[2] == '0') ? '1' : '0';
     $binary_with_errors[10] = ($binary_with_errors[10] == '0') ? '1' : '0';
 
-    // calculate CRC for the received code sequence
-    $received_crc = 0xFFF; // initial value for CRC
+    $received_crc = 0xFFF;
     for ($i = 0; $i < strlen($binary_with_errors); $i++) {
         $received_crc ^= ord($binary_with_errors[$i]) << 4;
         for ($j = 0; $j < 8; $j++) {
             if ($received_crc & 0x800) {
                 $received_crc = ($received_crc << 1) ^ $generator;
-                $received_crc &= 0xFFF; // ensure 12-bit CRC
+                $received_crc &= 0xFFF;
             } else {
                 $received_crc <<= 1;
-                $received_crc &= 0xFFF; // ensure 12-bit CRC
+                $received_crc &= 0xFFF;
             }
         }
     }
@@ -65,10 +61,10 @@ if(isset($_POST['sub'])){
         for ($j = 0; $j < 8; $j++) {
             if ($good_crc & 0x800) {
                 $good_crc = ($good_crc << 1) ^ $generator;
-                $good_crc &= 0xFFF; // ensure 12-bit CRC
+                $good_crc &= 0xFFF;
             } else {
                 $good_crc <<= 1;
-                $good_crc &= 0xFFF; // ensure 12-bit CRC
+                $good_crc &= 0xFFF;
             }
         }
     }

@@ -11,53 +11,92 @@
     }
 </style>
 <?
-//error_reporting(0);
+error_reporting(0);
 if(isset($_POST['sub'])){
-//    function str_to_num ($word){
-//        $symbol = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-//        for($i = 0; $i < count($word); $i++){
-//            for($j = 0; $j < count($symbol); $j++){
-//                if($word[$i] == $symbol[$j]){
-//                        $word[$i] = $j+10;
-//                }
-//            }
-//        }
-//        return $word;
-//    }
-//    function int_to_bin ($arr){
-//        for($i = 0; $i < count($arr); $i++){
-//            $arr2[$i] = decbin($arr[$i]);
-//        }
-//        return $arr2;
-//    }
-    $arr = str_split($_POST['word']);
-//    $word = str_to_num($arr);
-//    $arr2 = int_to_bin($word);
-//    $text = implode("", $arr2);
-//    echo $text;
-    for ($i = 0; $i < count($arr); $i++)
-    {
-        $arr2[$i] = pack("@", $arr[$i]);
+
+    $text = $_POST['text-input'];
+
+    // convert the text to binary code sequence
+    $binary = '';
+    for ($i = 0; $i < strlen($text); $i++) {
+        $binary .= str_pad(decbin(ord($text[$i])), 8, '0', STR_PAD_LEFT);
     }
-    var_dump($arr2);
+
+    // CRC12 method implementation
+    $generator = 0x80F; // generator polynomial
+    $crc = 0xFFF; // initial value for CRC
+    for ($i = 0; $i < strlen($binary); $i++) {
+        $crc ^= ord($binary[$i]) << 4;
+        for ($j = 0; $j < 8; $j++) {
+            if ($crc & 0x800) {
+                $crc = ($crc << 1) ^ $generator;
+                $crc &= 0xFFF; // ensure 12-bit CRC
+            } else {
+                $crc <<= 1;
+                $crc &= 0xFFF; // ensure 12-bit CRC
+            }
+        }
+    }
+
+    // introduce errors in the binary code sequence (for testing purposes)
+    $binary_with_errors = $binary;
+    $binary_with_errors[2] = ($binary_with_errors[2] == '0') ? '1' : '0';
+    $binary_with_errors[10] = ($binary_with_errors[10] == '0') ? '1' : '0';
+
+    // calculate CRC for the received code sequence
+    $received_crc = 0xFFF; // initial value for CRC
+    for ($i = 0; $i < strlen($binary_with_errors); $i++) {
+        $received_crc ^= ord($binary_with_errors[$i]) << 4;
+        for ($j = 0; $j < 8; $j++) {
+            if ($received_crc & 0x800) {
+                $received_crc = ($received_crc << 1) ^ $generator;
+                $received_crc &= 0xFFF; // ensure 12-bit CRC
+            } else {
+                $received_crc <<= 1;
+                $received_crc &= 0xFFF; // ensure 12-bit CRC
+            }
+        }
+    }
+
+    $binary_without_errors = $binary;
+    $good_crc = 0xFFF;
+    for ($i = 0; $i < strlen($binary_without_errors); $i++) {
+        $good_crc ^= ord($binary_without_errors[$i]) << 4;
+        for ($j = 0; $j < 8; $j++) {
+            if ($good_crc & 0x800) {
+                $good_crc = ($good_crc << 1) ^ $generator;
+                $good_crc &= 0xFFF; // ensure 12-bit CRC
+            } else {
+                $good_crc <<= 1;
+                $good_crc &= 0xFFF; // ensure 12-bit CRC
+            }
+        }
+    }
 
 }
 ?>
-
+<style>
+    textarea{
+        width: 500px;
+        height: 200px;
+    }
+</style>
 
 <div class="main_menu">
     <h2>Лабораторная работа 5</h2>
-    <form method="post">
-        <input type="text" name="word" style="width: 185px" placeholder="Введите текст">
-        <div style="height: 10px"></div>
-        <button type="submit" name="sub" style="height: 20px; width: 185px">Шифровать</button>
-
+    <form method="POST">
+        <input type="text" name="text-input" id="text-input" placeholder="Введите текст">
+        <br><br>
+        <input type="submit" value="Проверить" name="sub">
     </form>
-    <div style="justify-content: left">
-        <h2>Ключи: </h2>
-
-        <h2>Результат: </h2>
-        <h3>Текст: </h3>
-        <h3>Зашифрованный текст: </h3>
+    <div style="justify-content: center">
+        <h3>Результат: </h3>
+        <textarea style="height: 70px; ">Исходный текст: <?=$text?></textarea>
+        <textarea>Отправленный текст: <?=$binary?></textarea>
+        <h3>CRC: <?=$crc?></h3>
+        <textarea>Полученный текст: <?=$binary_without_errors?></textarea>
+        <h3>CRC: <?=$good_crc?></h3>
+        <textarea>Полученный текст (с ошибками): <?=$binary_with_errors?></textarea>
+        <h3>CRC: <?=$received_crc?></h3>
     </div>
 </div>
